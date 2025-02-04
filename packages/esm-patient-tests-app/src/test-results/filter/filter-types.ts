@@ -1,4 +1,5 @@
 import { type OBSERVATION_INTERPRETATION } from '@openmrs/esm-patient-common-lib';
+import { type GroupedObservation } from '../../types';
 
 interface Observation {
   display: string;
@@ -101,7 +102,7 @@ export interface TimelineData {
 
 export interface FilterContextProps extends ReducerState {
   timelineData: TimelineData;
-  tableData?: any;
+  tableData?: GroupedObservation[];
   activeTests: string[];
   someChecked: boolean;
   totalResultsCount: number;

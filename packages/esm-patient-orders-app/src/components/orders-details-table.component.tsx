@@ -1,7 +1,3 @@
-import React, { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { capitalize, lowerCase } from 'lodash-es';
-import { useTranslation } from 'react-i18next';
-import { useReactToPrint } from 'react-to-print';
 import {
   Button,
   DataTable,
@@ -28,21 +24,6 @@ import {
   Tile,
 } from '@carbon/react';
 import {
-  CardHeader,
-  EmptyState,
-  ErrorState,
-  getDrugOrderByUuid,
-  launchPatientWorkspace,
-  PatientChartPagination,
-  type Order,
-  type OrderBasketItem,
-  type OrderType,
-  useLaunchWorkspaceRequiringVisit,
-  useOrderBasket,
-  useOrderTypes,
-  usePatientOrders,
-} from '@openmrs/esm-patient-common-lib';
-import {
   AddIcon,
   age,
   ExtensionSlot,
@@ -55,12 +36,31 @@ import {
   usePagination,
   usePatient,
 } from '@openmrs/esm-framework';
-import { buildGeneralOrder, buildLabOrder, buildMedicationOrder } from '../utils';
-import MedicationRecord from './medication-record.component';
+import {
+  CardHeader,
+  EmptyState,
+  ErrorState,
+  getDrugOrderByUuid,
+  launchPatientWorkspace,
+  type Order,
+  type OrderBasketItem,
+  type OrderType,
+  PatientChartPagination,
+  useLaunchWorkspaceRequiringVisit,
+  useOrderBasket,
+  useOrderTypes,
+  usePatientOrders,
+} from '@openmrs/esm-patient-common-lib';
+import { capitalize, lowerCase } from 'lodash-es';
+import React, { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useReactToPrint } from 'react-to-print';
 import PrintComponent from '../print/print.component';
-import TestOrder from './test-order.component';
-import styles from './order-details-table.scss';
+import { buildGeneralOrder, buildLabOrder, buildMedicationOrder } from '../utils';
 import GeneralOrderTable from './general-order-table.component';
+import MedicationRecord from './medication-record.component';
+import styles from './order-details-table.scss';
+import TestOrder from './test-order.component';
 
 interface OrderDetailsProps {
   patientUuid: string;
@@ -97,7 +97,43 @@ type MutableOrderBasketItem = OrderBasketItem;
 
 const medicationsOrderBasket = 'medications';
 const labsOrderBasket = 'labs';
-
+const DEFAULT_ROWS = (t: any) => [
+  {
+    key: 'orderNumber',
+    header: t('orderNumber', 'Order number'),
+    isSortable: true,
+  },
+  {
+    key: 'dateOfOrder',
+    header: t('dateOfOrder', 'Date of order'),
+    isSortable: true,
+  },
+  {
+    key: 'orderType',
+    header: t('orderType', 'Order type'),
+    isSortable: true,
+  },
+  {
+    key: 'order',
+    header: t('order', 'Order'),
+    isSortable: true,
+  },
+  {
+    key: 'priority',
+    header: t('priority', 'Priority'),
+    isSortable: true,
+  },
+  {
+    key: 'orderedBy',
+    header: t('orderedBy', 'Ordered by'),
+    isSortable: false,
+  },
+  {
+    key: 'status',
+    header: t('status', 'Status'),
+    isSortable: true,
+  },
+];
 const OrderDetailsTable: React.FC<OrderDetailsProps> = ({ patientUuid, showAddButton, showPrintButton, title }) => {
   const { t } = useTranslation();
   const defaultPageSize = 10;
@@ -108,7 +144,7 @@ const OrderDetailsTable: React.FC<OrderDetailsProps> = ({ patientUuid, showAddBu
   const launchAddDrugOrder = useLaunchWorkspaceRequiringVisit('add-drug-order');
   const launchModifyLabOrder = useLaunchWorkspaceRequiringVisit('add-lab-order');
   const launchModifyGeneralOrder = useLaunchWorkspaceRequiringVisit('orderable-concept-workspace');
-  const contentToPrintRef = useRef(null);
+  const contentToPrintRef = useRef<HTMLDivElement>(null);
   const patient = usePatient(patientUuid);
   const { excludePatientIdentifierCodeTypes } = useConfig();
   const [isPrinting, setIsPrinting] = useState(false);
@@ -150,51 +186,7 @@ const OrderDetailsTable: React.FC<OrderDetailsProps> = ({ patientUuid, showAddBu
     [launchAddDrugOrder, launchModifyGeneralOrder, launchModifyLabOrder, launchOrderBasket],
   );
 
-  const tableHeaders: Array<OrderHeaderProps> = [
-    {
-      key: 'orderNumber',
-      header: t('orderNumber', 'Order number'),
-      isSortable: true,
-    },
-    {
-      key: 'dateOfOrder',
-      header: t('dateOfOrder', 'Date of order'),
-      isSortable: true,
-    },
-    {
-      key: 'orderType',
-      header: t('orderType', 'Order type'),
-      isSortable: true,
-    },
-    {
-      key: 'order',
-      header: t('order', 'Order'),
-      isSortable: true,
-    },
-    {
-      key: 'priority',
-      header: t('priority', 'Priority'),
-      isSortable: true,
-    },
-    {
-      key: 'orderedBy',
-      header: t('orderedBy', 'Ordered by'),
-      isSortable: false,
-    },
-    {
-      key: 'status',
-      header: t('status', 'Status'),
-      isSortable: true,
-    },
-  ];
-
-  if (isPrinting) {
-    tableHeaders.push({
-      key: 'dosage',
-      header: t('dosage', 'Dosage'),
-      isSortable: true,
-    });
-  }
+  const [tableHeaders, setTableHeaders] = useState<Array<OrderHeaderProps>>(DEFAULT_ROWS(t));
 
   const tableRows = useMemo(
     () =>
@@ -276,26 +268,12 @@ const OrderDetailsTable: React.FC<OrderDetailsProps> = ({ patientUuid, showAddBu
     };
   }, [patient, excludePatientIdentifierCodeTypes?.uuids]);
 
-  const onBeforeGetContentResolve = useRef(null);
-
-  useEffect(() => {
-    if (isPrinting && onBeforeGetContentResolve.current) {
-      onBeforeGetContentResolve.current();
-    }
-  }, [isPrinting]);
-
   const handlePrint = useReactToPrint({
-    content: () => contentToPrintRef.current,
+    contentRef: contentToPrintRef,
     documentTitle: `OpenMRS - ${patientDetails.name} - ${title}`,
-    onBeforeGetContent: () =>
-      new Promise((resolve) => {
-        if (patient && title) {
-          onBeforeGetContentResolve.current = resolve;
-          setIsPrinting(true);
-        }
-      }),
-    onAfterPrint: () => {
-      onBeforeGetContentResolve.current = null;
+    bodyClass: styles.printContainer,
+    onAfterPrint() {
+      setTableHeaders(DEFAULT_ROWS(t));
       setIsPrinting(false);
     },
   });
@@ -417,12 +395,26 @@ const OrderDetailsTable: React.FC<OrderDetailsProps> = ({ patientUuid, showAddBu
                       </span>
                     ) : null}
                     <div className={styles.buttons}>
-                      {showPrintButton && (
+                      {true && (
                         <Button
                           className={styles.printButton}
                           iconDescription={t('printOrder', 'Print order')}
                           kind="ghost"
-                          onClick={handlePrint}
+                          onClick={(e) => {
+                            setIsPrinting(true);
+                            setTableHeaders((prev) =>
+                              prev
+                                .filter((item) => item.key !== 'status' && item.key !== 'priority')
+                                .concat({
+                                  key: 'dosage',
+                                  header: t('dosage', 'Dosage'),
+                                  isSortable: true,
+                                }),
+                            );
+                            setTimeout(() => {
+                              handlePrint(e);
+                            }, 1000);
+                          }}
                           renderIcon={PrinterIcon}
                         >
                           {t('print', 'Print')}
@@ -484,13 +476,12 @@ const OrderDetailsTable: React.FC<OrderDetailsProps> = ({ patientUuid, showAddBu
                             <Table className={styles.table} {...getTableProps()}>
                               <TableHead>
                                 <TableRow>
-                                  <TableExpandHeader enableToggle {...getExpandHeaderProps()} />
+                                  {!isPrinting && <TableExpandHeader enableToggle {...getExpandHeaderProps()} />}
                                   {headers.map((header: { header: string }) => (
                                     <TableHeader key={header.header} {...getHeaderProps({ header })}>
                                       {header.header}
                                     </TableHeader>
                                   ))}
-                                  <TableExpandHeader />
                                 </TableRow>
                               </TableHead>
                               <TableBody>
@@ -499,13 +490,24 @@ const OrderDetailsTable: React.FC<OrderDetailsProps> = ({ patientUuid, showAddBu
 
                                   return (
                                     <React.Fragment key={row.id}>
-                                      <TableExpandRow className={styles.row} {...getRowProps({ row })}>
-                                        {row.cells.map((cell) => (
-                                          <TableCell className={styles.tableCell} key={cell.id}>
-                                            {cell.value?.['content'] ?? cell.value}
-                                          </TableCell>
-                                        ))}
-                                        {!isPrinting && (
+                                      {isPrinting ? (
+                                        <>
+                                          <TableRow>
+                                            {row.cells.map((cell) => (
+                                              <TableCell className={styles.tableCell} key={cell.id}>
+                                                {cell.value?.['content'] ?? cell.value}
+                                              </TableCell>
+                                            ))}
+                                          </TableRow>
+                                          <TableExpandedRow className={styles.hiddenRow} colSpan={headers.length + 1} />
+                                        </>
+                                      ) : (
+                                        <TableExpandRow className={styles.row} {...getRowProps({ row })}>
+                                          {row.cells.map((cell) => (
+                                            <TableCell className={styles.tableCell} key={cell.id}>
+                                              {cell.value?.['content'] ?? cell.value}
+                                            </TableCell>
+                                          ))}
                                           <TableCell className="cds--table-column-menu">
                                             {isOmrsOrder(matchingOrder) ? (
                                               <OrderBasketItemActions
@@ -525,9 +527,9 @@ const OrderDetailsTable: React.FC<OrderDetailsProps> = ({ patientUuid, showAddBu
                                               />
                                             )}
                                           </TableCell>
-                                        )}
-                                      </TableExpandRow>
-                                      {row.isExpanded ? (
+                                        </TableExpandRow>
+                                      )}
+                                      {!isPrinting && row.isExpanded ? (
                                         <TableExpandedRow
                                           colSpan={headers.length + 2}
                                           {...getExpandedRowProps({

@@ -4,7 +4,7 @@ import { type TFunction, useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { ContentSwitcher, Switch, Button } from '@carbon/react';
 import { EmptyState, ErrorState } from '@openmrs/esm-patient-common-lib';
-import { navigate, RenewIcon, useConfig, useLayoutType } from '@openmrs/esm-framework';
+import { navigate, RenewIcon, useConfig, useLayoutType, showModal } from '@openmrs/esm-framework';
 import { type ConfigObject } from '../../config-schema';
 import { type viewOpts } from '../../types';
 import { FilterContext, FilterProvider } from '../filter';
@@ -14,6 +14,7 @@ import PanelView from '../panel-view/panel-view.component';
 import TabletOverlay from '../tablet-overlay';
 import TreeViewWrapper from '../tree-view/tree-view-wrapper.component';
 import Trendline from '../trendline/trendline.component';
+import { Printer } from '@carbon/react/icons';
 import styles from './results-viewer.scss';
 
 type panelOpts = 'tree' | 'panel';
@@ -100,6 +101,13 @@ const ResultsViewer: React.FC<ResultsViewerProps> = ({ patientUuid, basePath, lo
     });
   }, [patientUuid]);
 
+  const openPrintModal = useCallback(() => {
+    const dispose = showModal('print-modal', {
+      patientUuid,
+      closeDialog: () => dispose(),
+    });
+  }, [patientUuid]);
+
   if (isTablet) {
     return (
       <div className={styles.resultsContainer}>
@@ -109,6 +117,15 @@ const ResultsViewer: React.FC<ResultsViewerProps> = ({ patientUuid, basePath, lo
             totalResultsCount ? `(${totalResultsCount})` : ''
           }`}</h4>
           <div className={styles.leftHeaderActions}>
+            <Button
+              kind="ghost"
+              size={isTablet ? 'md' : 'sm'}
+              renderIcon={Printer}
+              iconDescription="Print results"
+              onClick={openPrintModal}
+            >
+              {t('print', 'Print')}
+            </Button>
             <RefreshDataButton isTablet={isTablet} t={t} />
             <span className={styles.contentSwitcherLabel}>{t('view', 'View')}: </span>
             <ContentSwitcher
@@ -172,8 +189,18 @@ const ResultsViewer: React.FC<ResultsViewerProps> = ({ patientUuid, basePath, lo
               totalResultsCount ? `(${totalResultsCount})` : ''
             }`}</h4>
             <div className={styles.buttonsContainer}>
+              <Button
+                kind="ghost"
+                size={isTablet ? 'md' : 'sm'}
+                renderIcon={Printer}
+                iconDescription="Print results"
+                onClick={openPrintModal}
+              >
+                {t('print', 'Print')}
+              </Button>
               <RefreshDataButton isTablet={isTablet} t={t} />
               <span className={styles.contentSwitcherLabel}>{t('view', 'View')}: </span>
+
               <ContentSwitcher
                 className={styles.viewOptionsSwitcher}
                 onChange={({ name }: { name: viewOpts }) => setView(name)}

@@ -153,26 +153,10 @@ const VitalsOverview: React.FC<VitalsOverviewProps> = ({ patientUuid, pageSize, 
     [vitals],
   );
 
-  const onBeforeGetContentResolve = useRef(null);
-
-  useEffect(() => {
-    if (isPrinting && onBeforeGetContentResolve.current) {
-      onBeforeGetContentResolve.current();
-    }
-  }, [isPrinting]);
-
   const handlePrint = useReactToPrint({
-    content: () => contentToPrintRef.current,
+    contentRef: contentToPrintRef,
     documentTitle: `OpenMRS - ${patientDetails.name} - ${headerTitle}`,
-    onBeforeGetContent: () =>
-      new Promise((resolve) => {
-        if (patient && patient.patient && headerTitle) {
-          onBeforeGetContentResolve.current = resolve;
-          setIsPrinting(true);
-        }
-      }),
-    onAfterPrint: () => {
-      onBeforeGetContentResolve.current = null;
+    onAfterPrint() {
       setIsPrinting(false);
     },
   });
@@ -203,17 +187,21 @@ const VitalsOverview: React.FC<VitalsOverviewProps> = ({ patientUuid, pageSize, 
                   </ContentSwitcher>
                   <>
                     <span className={styles.divider}>|</span>
-                    {showPrintButton && (
-                      <Button
-                        kind="ghost"
-                        renderIcon={Printer}
-                        iconDescription="Add vitals"
-                        className={styles.printButton}
-                        onClick={handlePrint}
-                      >
-                        {t('print', 'Print')}
-                      </Button>
-                    )}
+                    <Button
+                      kind="ghost"
+                      renderIcon={Printer}
+                      iconDescription="Add vitals"
+                      className={styles.printButton}
+                      disabled={isPrinting}
+                      onClick={(e) => {
+                        setIsPrinting(true);
+                        setTimeout(() => {
+                          handlePrint(e);
+                        }, 1000);
+                      }}
+                    >
+                      {t('print', 'Print')}
+                    </Button>
                     <Button
                       kind="ghost"
                       renderIcon={Add}

@@ -49,7 +49,6 @@ function PrintModal({ patientUuid, closeDialog }) {
   }>({
     externalModuleName: '@openmrs/esm-patient-banner-app',
   });
-  const headerTitle = t('testResults_title', 'Test Results');
   const datePickerPlaceHolder = 'dd/mm/yyyy';
   const datePickerFormat = 'd/m/Y';
 
@@ -61,7 +60,8 @@ function PrintModal({ patientUuid, closeDialog }) {
   ];
 
   const handlePrint = useReactToPrint({
-    content: () => printContainerRef.current,
+    contentRef: printContainerRef,
+    copyShadowRoots: false,
   });
 
   const patient = usePatient(patientUuid);
@@ -73,10 +73,6 @@ function PrintModal({ patientUuid, closeDialog }) {
           return t('male', 'Male');
         case 'female':
           return t('female', 'Female');
-        case 'other':
-          return t('other', 'Other');
-        case 'unknown':
-          return t('unknown', 'Unknown');
         default:
           return gender;
       }
@@ -174,7 +170,7 @@ function PrintModal({ patientUuid, closeDialog }) {
             </header>
 
             <div className={styles.subheader}>
-              <h4>{headerTitle}</h4>
+              <h4>Labaratoriya natijalari</h4>
             </div>
           </div>
 

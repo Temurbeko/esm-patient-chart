@@ -201,26 +201,10 @@ const MedicationsDetailsTable: React.FC<MedicationsDetailsTableProps> = ({
     };
   }, [patient, t, excludePatientIdentifierCodeTypes?.uuids]);
 
-  const onBeforeGetContentResolve = useRef(null);
-
-  useEffect(() => {
-    if (isPrinting && onBeforeGetContentResolve.current) {
-      onBeforeGetContentResolve.current();
-    }
-  }, [isPrinting]);
-
   const handlePrint = useReactToPrint({
-    content: () => contentToPrintRef.current,
+    contentRef: contentToPrintRef,
     documentTitle: `OpenMRS - ${patientDetails.name} - ${title}`,
-    onBeforeGetContent: () =>
-      new Promise((resolve) => {
-        if (patient && title) {
-          onBeforeGetContentResolve.current = resolve;
-          setIsPrinting(true);
-        }
-      }),
     onAfterPrint: () => {
-      onBeforeGetContentResolve.current = null;
       setIsPrinting(false);
     },
   });
@@ -234,17 +218,21 @@ const MedicationsDetailsTable: React.FC<MedicationsDetailsTableProps> = ({
           </span>
         ) : null}
         <div className={styles.buttons}>
-          {showPrintButton && (
-            <Button
-              kind="ghost"
-              renderIcon={PrinterIcon}
-              iconDescription="Add vitals"
-              className={styles.printButton}
-              onClick={handlePrint}
-            >
-              {t('print', 'Print')}
-            </Button>
-          )}
+          <Button
+            kind="ghost"
+            renderIcon={PrinterIcon}
+            iconDescription="Add vitals"
+            className={styles.printButton}
+            onClick={(e) => {
+              setTimeout(() => {
+                handlePrint(e);
+              }, 1000);
+              setIsPrinting(true);
+            }}
+            disabled={isPrinting}
+          >
+            {t('print', 'Print')}
+          </Button>
           {showAddButton ?? true ? (
             <Button
               kind="ghost"
@@ -316,13 +304,15 @@ const MedicationsDetailsTable: React.FC<MedicationsDetailsTableProps> = ({
             </TableContainer>
           )}
         </DataTable>
-        <PatientChartPagination
-          pageNumber={currentPage}
-          totalItems={medications.length}
-          currentItems={results.length}
-          pageSize={pageSize}
-          onPageNumberChange={({ page }) => goTo(page)}
-        />
+        {!isPrinting && (
+          <PatientChartPagination
+            pageNumber={currentPage}
+            totalItems={medications.length}
+            currentItems={results.length}
+            pageSize={pageSize}
+            onPageNumberChange={({ page }) => goTo(page)}
+          />
+        )}
       </div>
     </div>
   );

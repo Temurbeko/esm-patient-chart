@@ -16,7 +16,7 @@ interface PrintComponentProps {
 
 export function PrintComponent({ subheader, patientDetails }: PrintComponentProps) {
   const { t } = useTranslation();
-  const { logo } = useConfig();
+  const { logo, ...config } = useConfig();
 
   const session = useSession();
 
@@ -46,7 +46,7 @@ export function PrintComponent({ subheader, patientDetails }: PrintComponentProp
         </div>
 
         <div className={styles.printedBy}>
-          {t('printedBy', 'Printed by')}
+          chop qildi:
           <span className={styles.printedBy}>
             {session.user.display} {t('onDate', 'on')} {formatDate(new Date(), { noToday: true })}
           </span>

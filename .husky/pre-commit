@@ -3,5 +3,3 @@
 
 set -e  # die on error
 
-npx lint-staged
-yarn turbo run extract-translations

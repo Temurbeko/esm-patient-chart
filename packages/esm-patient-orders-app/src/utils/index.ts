@@ -110,3 +110,50 @@ export function buildGeneralOrder(order: Order, action?: OrderAction): OrderBask
     scheduledDate: order.scheduledDate ? new Date(order.scheduledDate) : null,
   };
 }
+
+export function extractPhoneNumber(str: string, extractNumbersOnly: boolean = false) {
+  const phone = str.match(/\{([^}]*)\}/);
+  return {
+    str: str.replace(/\{[^}]*\}/g, '').trim(),
+    phone: extractNumbersOnly && phone[1] ? extractNumbers(phone[1]) : phone ? phone[1] : null,
+  };
+}
+function extractNumbers(input: string): string {
+  return input.replace(/\D/g, '');
+}
+
+export const bot_url = 'http://localhost:3000'; // Change to your NestJS backend URL
+
+export interface LabResult {
+  status: string;
+  name: string;
+  result: string;
+  createdDate: string;
+  updatedDate: string;
+}
+
+export interface PatientData {
+  openmrsId: string;
+  firstName: string;
+  lastName?: string;
+  phone: string;
+  labResults: LabResult[];
+}
+
+export const integrateLabOrderWithTgBot = async (patientData: PatientData) => {
+  try {
+    const response = await fetch(`${bot_url}/patients`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(patientData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send patient data: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error('Error sending patient data to 🤖 tgbot:', error);
+  }
+};

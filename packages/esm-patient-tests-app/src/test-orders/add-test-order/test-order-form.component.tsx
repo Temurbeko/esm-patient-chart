@@ -7,8 +7,16 @@ import {
   priorityOptions,
   useOrderBasket,
   useOrderType,
+  usePatientChartStore,
 } from '@openmrs/esm-patient-common-lib';
-import { ExtensionSlot, OpenmrsDatePicker, useConfig, useLayoutType, useSession } from '@openmrs/esm-framework';
+import {
+  ExtensionSlot,
+  OpenmrsDatePicker,
+  useConfig,
+  useLayoutType,
+  usePatient,
+  useSession,
+} from '@openmrs/esm-framework';
 import {
   Button,
   ButtonSet,
@@ -56,6 +64,7 @@ export function LabOrderForm({
   const isEditing = useMemo(() => initialOrder && initialOrder.action === 'REVISE', [initialOrder]);
   const { orders, setOrders } = useOrderBasket<TestOrderBasketItem>(orderTypeUuid, prepTestOrderPostData);
   const [showErrorNotification, setShowErrorNotification] = useState(false);
+  const patient = usePatient();
   const config = useConfig<ConfigObject>();
   const { orderType, isLoadingOrderType } = useOrderType(orderTypeUuid);
   const orderReasonRequired = (
@@ -131,6 +140,7 @@ export function LabOrderForm({
       const finalizedOrder: TestOrderBasketItem = {
         ...initialOrder,
         ...data,
+        instructions: `${data.instructions || ''} {${patient.patient.telecom?.[0]?.value}}`,
       };
       finalizedOrder.orderer = session.currentProvider.uuid;
 

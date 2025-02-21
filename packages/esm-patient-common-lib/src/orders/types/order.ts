@@ -63,7 +63,7 @@ export interface OrderBasketItem {
   /**
    * An optional identifier from the fulfiller (e.g., lab system) for the specimen or record associated with the order.
    */
-  accessionNumber?: string;
+  accessionNumber?:  string;
   concept?: Concept;
   instructions?: string;
   urgency?: OrderUrgency;

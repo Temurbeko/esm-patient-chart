@@ -171,45 +171,60 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
     };
 
     try {
-      await updateOrderResult(
-        order.uuid,
-        order.encounter.uuid,
-        obsPayload,
-        resultsStatusPayload,
-        orderDiscontinuationPayload,
-        abortController,
-      );
-      closeWorkspaceWithSavedChanges();
-      mutateResults();
-      mutateOrderData();
-      showNotification(
-        'success',
-        t('successfullySavedLabResults', 'Lab results for {{orderNumber}} have been successfully updated', {
-          orderNumber: order?.orderNumber,
-        }),
-      );
-
-      integrateLabOrderWithTgBot({
+      const isSuccess = await integrateLabOrderWithTgBot({
         firstName: order.patient.person.display.split(' ')[0],
         lastName: order.patient.person.display.split(' ')[1],
         openmrsId: order.patient.display.split(' ')[0],
-        phone: extractPhoneNumber(order.instructions, true).phone,
+        phone: "998973540177", // !yoddon chiqmasin extractPhoneNumber(order.instructions, true).phone,
         labResults: [
           {
             name: order.display,
             createdDate: new Date().toISOString(),
             updatedDate: new Date().toISOString(),
-            status: extractPhoneNumber(order.instructions, true).str,
-            result: JSON.stringify(formValues),
+            status: "Ha otam 😀",// !extractPhoneNumber(order.instructions, true).str,
+            result: obsPayload.obs.map((obsPayload) =>
+              isCoded(concept)
+                ? {
+                    ...obsPayload,
+                    value: String(concept.answers.find((answer) => answer.uuid === obsPayload.value.uuid)?.display),
+                  }
+                : isPanel(concept)
+                ? {
+                    ...obsPayload,
+                    groupMembers: obsPayload.groupMembers.map((member) => ({ ...member, value: String(member.value) })),
+                  }
+                : obsPayload,
+            ),
           },
         ],
       });
+      debugger;
+      if (!!isSuccess) {
+        await updateOrderResult(
+          order.uuid,
+          order.encounter.uuid,
+          obsPayload,
+          resultsStatusPayload,
+          orderDiscontinuationPayload,
+          abortController,
+        );
+        closeWorkspaceWithSavedChanges();
+        mutateResults();
+        mutateOrderData();
+        showNotification(
+          'success',
+          t('successfullySavedLabResults', 'Lab results for {{orderNumber}} have been successfully updated', {
+            orderNumber: order?.orderNumber,
+          }),
+        );
+      }
     } catch (err) {
       showNotification('error', err?.message);
     } finally {
       setShowEmptyFormErrorNotification(false);
     }
   };
+  console.log(concept);
 
   return (
     <Form className={styles.form} onSubmit={handleSubmit(saveLabResults)}>

@@ -233,7 +233,13 @@ function createGroupMember(member: LabOrderConcept, order: Order, values: Record
     concept: { uuid: member.uuid },
     value: value,
     status: status,
+    display: member.display,
     order: { uuid: order.uuid },
+    units: member.units,
+    hiAbsolute: member.hiAbsolute,
+    hiNormal: member.hiNormal,
+    lowAbsolute: member.lowAbsolute,
+    lowNormal: member.lowNormal,
   };
 }
 
@@ -242,6 +248,7 @@ function createObservation(order: Order, groupMembers = null, value = null, stat
     concept: { uuid: order.concept.uuid },
     status: status,
     order: { uuid: order.uuid },
+    display: order.display,
     ...(groupMembers && groupMembers.length > 0 && { groupMembers }),
     ...(value !== null && value !== undefined && { value }),
   };

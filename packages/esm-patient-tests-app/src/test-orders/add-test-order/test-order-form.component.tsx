@@ -140,7 +140,6 @@ export function LabOrderForm({
       const finalizedOrder: TestOrderBasketItem = {
         ...initialOrder,
         ...data,
-        instructions: `${data.instructions || ''} {${patient.patient.telecom?.[0]?.value}}`,
       };
       finalizedOrder.orderer = session.currentProvider.uuid;
 
@@ -154,7 +153,10 @@ export function LabOrderForm({
           isOrderIncomplete: false,
         };
       } else {
-        newOrders.push(finalizedOrder);
+        newOrders.push({
+          ...finalizedOrder,
+          instructions: `${finalizedOrder.instructions || ''} {${patient.patient.telecom?.[0]?.value}}`,
+        });
       }
 
       setOrders(newOrders);

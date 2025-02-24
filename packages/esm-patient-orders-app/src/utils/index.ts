@@ -1,4 +1,5 @@
 import { type Order, type OrderAction, type OrderBasketItem } from '@openmrs/esm-patient-common-lib';
+import { type createObservationPayload } from '../lab-results/lab-results.resource';
 
 /**
  * Enables a comparison of arbitrary values with support for undefined/null.
@@ -127,7 +128,7 @@ export const bot_url = 'http://localhost:3000'; // Change to your NestJS backend
 export interface LabResult {
   status: string;
   name: string;
-  result: string;
+  result: ReturnType<typeof createObservationPayload>['obs'];
   createdDate: string;
   updatedDate: string;
 }
@@ -153,6 +154,7 @@ export const integrateLabOrderWithTgBot = async (patientData: PatientData) => {
     if (!response.ok) {
       throw new Error(`Failed to send patient data: ${response.statusText}`);
     }
+    return response;
   } catch (error) {
     console.error('Error sending patient data to 🤖 tgbot:', error);
   }

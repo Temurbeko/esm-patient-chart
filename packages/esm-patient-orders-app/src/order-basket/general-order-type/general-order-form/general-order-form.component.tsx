@@ -175,7 +175,7 @@ export function OrderForm({
               </InputWrapper>
             </Column>
           </Grid>
-          {config.showReferenceNumberField && (
+          {/* {config.showReferenceNumberField && (
             <Grid className={styles.gridRow}>
               <Column lg={16} md={8} sm={4}>
                 <InputWrapper>
@@ -201,7 +201,7 @@ export function OrderForm({
                 </InputWrapper>
               </Column>
             </Grid>
-          )}
+          )} */}
           <Grid className={styles.gridRow}>
             <Column lg={8} md={8} sm={4}>
               <InputWrapper>

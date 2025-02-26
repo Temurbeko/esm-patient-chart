@@ -7,7 +7,7 @@ type LabOrderRequest = Pick<TestOrderBasketItem, 'action' | 'testType'>;
 export function createEmptyLabOrder(testType: TestType, orderer: string): TestOrderBasketItem {
   return {
     action: 'NEW',
-    urgency: priorityOptions[0].value as OrderUrgency,
+    urgency: priorityOptions[1].value as OrderUrgency,
     display: testType.label,
     testType,
     orderer,

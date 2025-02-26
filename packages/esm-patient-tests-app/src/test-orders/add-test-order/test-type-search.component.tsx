@@ -194,9 +194,9 @@ const TestTypeSearchResultItem: React.FC<TestTypeSearchResultItemProps> = ({
 
   const createLabOrder = useCallback(
     (orderableConcept: TestType) => {
-      return createEmptyLabOrder(orderableConcept, session.currentProvider?.uuid);
+      return createEmptyLabOrder(orderableConcept, session?.currentProvider?.uuid);
     },
-    [session.currentProvider.uuid],
+    [session?.currentProvider?.uuid],
   );
 
   const addToBasket = useCallback(() => {
@@ -240,7 +240,7 @@ const TestTypeSearchResultItem: React.FC<TestTypeSearchResultItemProps> = ({
             )}
             onClick={addToBasket}
           >
-            {t('directlyAddToBasket', 'Add to basket')}
+            Savata qosh
           </Button>
         )}
         <Button

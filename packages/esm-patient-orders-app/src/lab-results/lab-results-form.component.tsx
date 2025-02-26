@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import { Button, ButtonSet, Form, InlineLoading, InlineNotification, Stack } from '@carbon/react';
-import classNames from 'classnames';
-import { type Control, useForm } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
-import { mutate } from 'swr';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { restBaseUrl, showSnackbar, useAbortController, useLayoutType } from '@openmrs/esm-framework';
 import { type DefaultPatientWorkspaceProps, type Order } from '@openmrs/esm-patient-common-lib';
+import classNames from 'classnames';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useForm, type Control } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { mutate } from 'swr';
+import ResultFormField from './lab-results-form-field.component';
+import styles from './lab-results-form.scss';
 import {
   createObservationPayload,
   isCoded,
@@ -19,8 +21,7 @@ import {
   useOrderConceptByUuid,
 } from './lab-results.resource';
 import { useLabResultsFormSchema } from './useLabResultsFormSchema';
-import ResultFormField from './lab-results-form-field.component';
-import styles from './lab-results-form.scss';
+import { extractPhoneNumber, getIntegratedBotBody, integrateLabOrderWithTgBot } from '../utils';
 
 export interface LabResultsFormProps extends DefaultPatientWorkspaceProps {
   order: Order;
@@ -42,6 +43,7 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
   const abortController = useAbortController();
   const isTablet = useLayoutType() === 'tablet';
   const { concept, isLoading: isLoadingConcepts } = useOrderConceptByUuid(order.concept.uuid);
+
   const [showEmptyFormErrorNotification, setShowEmptyFormErrorNotification] = useState(false);
   const schema = useLabResultsFormSchema(order.concept.uuid);
   const { completeLabResult, isLoading, mutate: mutateResults } = useCompletedLabResults(order);
@@ -106,7 +108,6 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
       </div>
     );
   }
-
   const saveLabResults = async (formValues: Record<string, unknown>) => {
     const isEmptyForm = Object.values(formValues).every(
       (value) => value === '' || value === null || value === undefined,
@@ -176,26 +177,31 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
     };
 
     try {
-      await updateOrderResult(
-        order.uuid,
-        order.encounter.uuid,
-        obsPayload,
-        resultsStatusPayload,
-        orderDiscontinuationPayload,
-        abortController,
-      );
+      const body = getIntegratedBotBody({ concept, obsPayload, order });
+      const isSuccess = await integrateLabOrderWithTgBot(body);
+      debugger
+      if (!!isSuccess) {
+        await updateOrderResult(
+          order.uuid,
+          order.encounter.uuid,
+          obsPayload,
+          resultsStatusPayload,
+          orderDiscontinuationPayload,
+          abortController,
+        );
 
-      closeWorkspaceWithSavedChanges();
-      mutateOrderData();
-      mutateResults();
-      invalidateLabOrders?.();
+        closeWorkspaceWithSavedChanges();
+        mutateOrderData();
+        mutateResults();
+        invalidateLabOrders?.();
 
-      showNotification(
-        'success',
-        t('successfullySavedLabResults', 'Lab results for {{orderNumber}} have been successfully updated', {
-          orderNumber: order?.orderNumber,
-        }),
-      );
+        showNotification(
+          'success',
+          t('successfullySavedLabResults', 'Lab results for {{orderNumber}} have been successfully updated', {
+            orderNumber: order?.orderNumber,
+          }),
+        );
+      }
     } catch (err) {
       showNotification('error', err?.message);
     } finally {

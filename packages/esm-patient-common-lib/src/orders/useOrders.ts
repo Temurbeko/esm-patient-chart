@@ -63,7 +63,7 @@ export function getDrugOrderByUuid(orderUuid: string) {
 
 // See the Urgency enum in https://github.com/openmrs/openmrs-core/blob/492dcd35b85d48730bd19da48f6db146cc882c22/api/src/main/java/org/openmrs/Order.java
 export const priorityOptions: PriorityOption[] = [
-  { value: 'ROUTINE', label: translateFrom(patientChartAppModuleName, 'Routine') },
-  { value: 'STAT', label: translateFrom(patientChartAppModuleName, 'Stat') },
-  { value: 'ON_SCHEDULED_DATE', label: translateFrom(patientChartAppModuleName, 'On scheduled date') },
+  { value: 'ROUTINE', label: "Takrorlanuvchi" },
+  { value: 'STAT', label: 'Bir marta' },
+  { value: 'ON_SCHEDULED_DATE', label: 'Ma`lum vaqtda' },
 ];

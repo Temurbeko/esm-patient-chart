@@ -1,4 +1,10 @@
 import { type Order, type OrderAction, type OrderBasketItem } from '@openmrs/esm-patient-common-lib';
+import {
+  isCoded,
+  isPanel,
+  type LabOrderConcept,
+  type createObservationPayload,
+} from '../lab-results/lab-results.resource';
 
 /**
  * Enables a comparison of arbitrary values with support for undefined/null.
@@ -110,3 +116,100 @@ export function buildGeneralOrder(order: Order, action?: OrderAction): OrderBask
     scheduledDate: order.scheduledDate ? new Date(order.scheduledDate) : null,
   };
 }
+
+export function extractPhoneNumber(str: string, extractNumbersOnly: boolean = false) {
+  const phone = str.match(/\{([^}]*)\}/);
+  return {
+    str: str.replace(/\{[^}]*\}/g, '').trim(),
+    phone: extractNumbersOnly && phone[1] ? extractNumbers(phone[1]) : phone ? phone[1] : null,
+  };
+}
+function extractNumbers(input: string): string {
+  return input.replace(/\D/g, '');
+}
+
+export const bot_url = 'http://localhost:3000'; // Change to your NestJS backend URL
+
+export interface LabResult {
+  status: string;
+  name: string;
+  result: ReturnType<typeof createObservationPayload>['obs'];
+  createdDate: string;
+  updatedDate: string;
+}
+
+export interface PatientData {
+  openmrsId: string;
+  firstName: string;
+  lastName?: string;
+  phone: string;
+  labResults: LabResult[];
+}
+
+export const integrateLabOrderWithTgBot = async (patientData: PatientData) => {
+  try {
+    const response = await fetch(`${bot_url}/patients`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(patientData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send patient data: ${response.statusText}`);
+    }
+    return response;
+  } catch (error) {
+    console.error('Error sending patient data to 🤖 tgbot:', error);
+  }
+};
+
+export const getIntegratedBotBody = ({
+  order,
+  concept,
+  obsPayload,
+}: {
+  order: Order;
+  concept: LabOrderConcept;
+  obsPayload: ReturnType<typeof createObservationPayload>;
+}) => ({
+  firstName: order.patient.person.display.split(' ')[0],
+  lastName: order.patient.person.display.split(' ')[1],
+  openmrsId: order.patient.display.split(' ')[0],
+  phone: extractPhoneNumber(order.instructions, true).phone,
+  labResults: [
+    {
+      name: order.display,
+      createdDate: new Date().toISOString(),
+      updatedDate: new Date().toISOString(),
+      status: extractPhoneNumber(order.instructions, true).str,
+      result: obsPayload.obs.map((obsPayload) =>
+        isCoded(concept)
+          ? {
+              ...obsPayload,
+              value: String(concept.answers.find((answer) => answer.uuid === obsPayload.value.uuid)?.display),
+              units: concept?.units,
+              hiAbsolute: concept?.hiAbsolute,
+              hiNormal: concept?.hiNormal,
+              lowAbsolute: concept?.lowAbsolute,
+              lowNormal: concept?.lowNormal,
+            }
+          : isPanel(concept)
+          ? {
+              ...obsPayload,
+              groupMembers: obsPayload.groupMembers.map((member) => ({ ...member, value: String(member.value) })),
+            }
+          : {
+              ...obsPayload,
+              value: String(obsPayload.value),
+              units: concept?.units,
+              hiAbsolute: concept?.hiAbsolute,
+              hiNormal: concept?.hiNormal,
+              lowAbsolute: concept?.lowAbsolute,
+              lowNormal: concept?.lowNormal,
+            },
+      ),
+    },
+  ],
+});

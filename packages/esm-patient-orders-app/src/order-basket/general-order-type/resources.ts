@@ -16,7 +16,7 @@ import {
 export function createEmptyOrder(concept: OrderableConcept, orderer: string): OrderBasketItem {
   return {
     action: 'NEW',
-    urgency: priorityOptions[0].value as OrderUrgency,
+    urgency: priorityOptions[1].value as OrderUrgency,
     display: concept.label,
     concept,
     orderer,

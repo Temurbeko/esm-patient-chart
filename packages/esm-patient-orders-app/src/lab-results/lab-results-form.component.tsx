@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useForm, type Control } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { mutate } from 'swr';
+import { getIntegratedBotBody, integrateLabOrderWithTgBot } from '../utils';
 import ResultFormField from './lab-results-form-field.component';
 import styles from './lab-results-form.scss';
 import {
@@ -20,8 +21,8 @@ import {
   useCompletedLabResults,
   useOrderConceptByUuid,
 } from './lab-results.resource';
+import { createObservationPayloadForTgBot } from './lab-results.resource-tg-bot';
 import { useLabResultsFormSchema } from './useLabResultsFormSchema';
-import { extractPhoneNumber, getIntegratedBotBody, integrateLabOrderWithTgBot } from '../utils';
 
 export interface LabResultsFormProps extends DefaultPatientWorkspaceProps {
   order: Order;
@@ -161,6 +162,8 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
 
     // Set the observation status to 'FINAL' as we're not capturing it in the form
     const obsPayload = createObservationPayload(concept, order, formValues, 'FINAL');
+    const obsPayloadTg = createObservationPayloadForTgBot(concept, order, formValues, 'FINAL');
+    
     const orderDiscontinuationPayload = {
       previousOrder: order.uuid,
       type: 'testorder',
@@ -177,9 +180,8 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
     };
 
     try {
-      const body = getIntegratedBotBody({ concept, obsPayload, order });
+      const body = getIntegratedBotBody({ concept, obsPayloadTg, order });
       const isSuccess = await integrateLabOrderWithTgBot(body);
-      debugger
       if (!!isSuccess) {
         await updateOrderResult(
           order.uuid,

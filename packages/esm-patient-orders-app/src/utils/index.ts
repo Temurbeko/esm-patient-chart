@@ -3,8 +3,8 @@ import {
   isCoded,
   isPanel,
   type LabOrderConcept,
-  type createObservationPayload,
-} from '../lab-results/lab-results.resource';
+  type createObservationPayloadForTgBot,
+} from '../lab-results/lab-results.resource-tg-bot';
 
 /**
  * Enables a comparison of arbitrary values with support for undefined/null.
@@ -133,7 +133,7 @@ export const bot_url = 'http://localhost:3000'; // Change to your NestJS backend
 export interface LabResult {
   status: string;
   name: string;
-  result: ReturnType<typeof createObservationPayload>['obs'];
+  result: ReturnType<typeof createObservationPayloadForTgBot>['obs'];
   createdDate: string;
   updatedDate: string;
 }
@@ -168,11 +168,11 @@ export const integrateLabOrderWithTgBot = async (patientData: PatientData) => {
 export const getIntegratedBotBody = ({
   order,
   concept,
-  obsPayload,
+  obsPayloadTg,
 }: {
   order: Order;
   concept: LabOrderConcept;
-  obsPayload: ReturnType<typeof createObservationPayload>;
+  obsPayloadTg: ReturnType<typeof createObservationPayloadForTgBot>;
 }) => ({
   firstName: order.patient.person.display.split(' ')[0],
   lastName: order.patient.person.display.split(' ')[1],
@@ -184,7 +184,7 @@ export const getIntegratedBotBody = ({
       createdDate: new Date().toISOString(),
       updatedDate: new Date().toISOString(),
       status: extractPhoneNumber(order.instructions, true).str,
-      result: obsPayload.obs.map((obsPayload) =>
+      result: obsPayloadTg.obs.map((obsPayload) =>
         isCoded(concept)
           ? {
               ...obsPayload,

@@ -114,6 +114,7 @@ export function LabOrderForm({
     resolver: zodResolver(labOrderFormSchema),
     defaultValues: {
       accessionNumber: null,
+      urgency: priorityOptions[1].value,
       ...initialOrder,
     },
   });
@@ -213,7 +214,7 @@ export function LabOrderForm({
             </InputWrapper>
           </Column>
         </Grid>
-        {config.showReferenceNumberField ? (
+        {/* {config.showReferenceNumberField ? (
           <Grid className={styles.gridRow}>
             <Column lg={16} md={8} sm={4}>
               <InputWrapper>
@@ -239,7 +240,7 @@ export function LabOrderForm({
               </InputWrapper>
             </Column>
           </Grid>
-        ) : null}
+        ) : null} */}
         <Grid className={styles.gridRow}>
           <Column lg={8} md={8} sm={4}>
             <InputWrapper>
@@ -280,6 +281,7 @@ export function LabOrderForm({
                       invalidText={fieldState?.error?.message}
                       minDate={new Date()}
                       size={responsiveSize}
+                      
                     />
                   )}
                 />
